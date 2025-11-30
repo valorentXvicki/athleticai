@@ -71,42 +71,54 @@ def get_db():
 
 
 def init_db():
-    """Initialize database tables."""
+    """Initialize database tables.
+    
+    Note: This function creates tables with schema matching the existing database.
+    The schema uses:
+    - users: name, email, password (not username, password_hash)
+    - user_preferences: user_email (not user_id)
+    - activities: user_email, type (not user_id, activity_type)
+    """
     conn = get_db()
     cursor = conn.cursor()
     
-    # Users table
+    # Users table - matches existing schema
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            name TEXT NOT NULL,
+            password TEXT NOT NULL,
+            auth_provider TEXT DEFAULT 'local',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
-    # User preferences table
+    # User preferences table - uses user_email to match existing schema
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS user_preferences (
-            user_id INTEGER PRIMARY KEY,
-            interests TEXT DEFAULT '["running"]',
-            preferred_time TEXT DEFAULT 'morning',
-            rsvps TEXT DEFAULT '[]',
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT UNIQUE NOT NULL,
+            interests TEXT,
+            preferred_time TEXT,
+            rsvps TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
         )
     ''')
     
-    # Activities table
+    # Activities table - uses user_email and type to match existing schema
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS activities (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            activity_type TEXT NOT NULL,
+            user_email TEXT NOT NULL,
+            type TEXT NOT NULL,
             distance REAL,
-            duration INTEGER,
+            date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
         )
     ''')
     
@@ -394,9 +406,9 @@ async def send_otp(request: SendOTPRequest):
     conn.commit()
     conn.close()
     
-    # In production, send actual email here
-    # For development, we'll return a message indicating OTP was "sent"
-    print(f"[DEV] OTP for {request.email}: {otp}")  # Remove in production
+    # TODO: In production, implement actual email sending here
+    # For development/testing, the OTP can be retrieved from the database
+    # Do NOT log OTP to console in production (security risk)
     
     return {"message": f"OTP has been sent to {request.email}"}
 
