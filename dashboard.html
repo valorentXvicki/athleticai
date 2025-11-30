@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" data-video-id="Bcpu-jqAL6w">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Athlete Dashboard — Athletic Spirit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    /* -------------------------
+       RESET & THEME (from newcode.html)
+    -------------------------- */
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    :root{
+      --bg:#0a1a23;
+      --ink:#ffffff;
+      --muted:#c5e0ec;
+      --primary:#00ff9d;     /* neon green */
+      --accent:#00e5ff;      /* electric blue */
+      --card:rgba(8,26,35,.55);
+      --glass:blur(10px) saturate(120%);
+      --ring:0 0 0 1px rgba(0,255,157,.35), 0 15px 35px rgba(0,255,157,.15);
+      --ring-blue:0 0 0 1px rgba(0,229,255,.3), 0 15px 35px rgba(0,229,255,.12);
+      --radius:18px;
+      --speed:220ms;
+      --font-heading: 'Teko', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --text-shadow: 0 1px 4px rgba(0,0,0,.5);
+    }
+    body{
+      font-family: var(--font-body);
+      color:var(--ink);
+      line-height:1.5;
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+    main {
+      position: relative;
+      z-index: 5;
+      padding: 100px 24px 48px;
+    }
+    /* -------------------------
+       NAVBAR
+    -------------------------- */
+    .nav{
+      position:fixed; inset-inline:0; top:0; z-index:20;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 24px; backdrop-filter: var(--glass);
+      background:linear-gradient(180deg, rgba(3,12,18,.75), rgba(3,12,18,.35) 70%, transparent);
+      border-bottom:1px solid rgba(0,229,255,.15);
+    }
+    .brand{
+      display:flex; align-items:center; gap:.6rem;
+      font-family: var(--font-heading); font-weight:700; font-size:1.2rem; letter-spacing:1px;
+    }
+    .brand .dot{width:10px; height:10px; border-radius:50%; background:var(--primary); box-shadow:0 0 12px var(--primary)}
+    .nav a{color:var(--ink); text-decoration:none; margin:0 .75rem; opacity:.9; font-weight:700;}
+    .nav a:hover{color:var(--primary)}
+    .logout-btn{
+      background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,.2);
+      border-radius:999px; padding:.5rem .9rem; cursor:pointer;
+      font-family: var(--font-heading); font-weight:600; font-size:.9rem; letter-spacing:.5px;
+      transition: all var(--speed) ease;
+    }
+    .logout-btn:hover{ background: rgba(255,255,255,.1); color: var(--ink); }
+
+    /* -------------------------
+       YOUTUBE BG
+    -------------------------- */
+    .yt-wrap{
+      position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden;
+    }
+    .yt-wrap iframe{
+      position: absolute; top: 50%; left: 50%;
+      width: 100vw; height: 56.25vw;
+      min-height: 100vh; min-width: 177.77vh;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .yt-wrap::after{
+      content:''; position:absolute; inset:0;
+      background: radial-gradient(circle at 50% 50%, transparent, var(--bg) 75%), var(--bg);
+      z-index:2;
+    }
+
+    /* -------------------------
+       DASHBOARD LAYOUT
+    -------------------------- */
+    .dashboard-grid {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 300px 1fr;
+      grid-template-areas:
+        "profile header"
+        "profile stats"
+        "chart chart"
+        "trophies activity";
+    }
+
+    .dash-card {
+      background:var(--card); border:1px solid rgba(0,229,255,.15); border-radius:var(--radius);
+      backdrop-filter: var(--glass); padding:24px; box-shadow: var(--ring-blue);
+    }
+
+    /* Profile Card */
+    .profile-card {
+      grid-area: profile;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center;
+      position: relative; /* For positioning the edit button */
+    }
+    .profile-card .edit-btn {
+      position: absolute; top: 16px; right: 16px;
+    }
+    .profile-pic {
+      width: 120px; height: 120px; border-radius: 50%;
+      border: 3px solid var(--primary);
+      object-fit: cover;
+      box-shadow: 0 0 20px rgba(0,255,157,.4);
+      margin-bottom: 16px;
+    }
+    .profile-card h1 {
+      font-family: var(--font-heading); font-size: 2rem; margin: 0;
+    }
+    .profile-card .discipline {
+      color: var(--accent); font-family: var(--font-heading); font-size: 1.1rem;
+      letter-spacing: 1px; margin-bottom: 24px;
+    }
+    .profile-bio { font-size: .9rem; color: var(--muted); }
+
+    /* Profile Picture Upload styles */
+    .profile-pic-edit-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,.5); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink); font-size: 2rem;
+      opacity: 0; transition: opacity var(--speed) ease;
+      cursor: pointer;
+    }
+    .profile-edit .profile-pic-container:hover .profile-pic-edit-overlay {
+      opacity: 1;
+    }
+
+    /* Edit Mode Styles */
+    .profile-card.editing .profile-view { display: none; }
+    .profile-card:not(.editing) .profile-edit { display: none; }
+    .profile-edit .input-group { text-align: left; margin-bottom: 12px; width: 100%; }
+    .profile-edit label { font-size: .8rem; color: var(--muted); margin-bottom: 4px; display: block; }
+    .profile-edit input, .profile-edit textarea {
+      width: 100%; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.2);
+      border-radius: 8px; padding: 8px; color: var(--ink); font-family: var(--font-body);
+    }
+    .profile-edit textarea { resize: vertical; min-height: 80px; }
+    .edit-actions { display: flex; gap: 10px; margin-top: 16px; width: 100%; }
+    .edit-actions button {
+      flex: 1; border: none; border-radius: 8px; padding: 8px; cursor: pointer;
+      font-family: var(--font-heading); font-size: .9rem; letter-spacing: .5px;
+    }
+    .save-btn { background: var(--primary); color: var(--bg); }
+    .cancel-btn { background: rgba(255,255,255,.1); color: var(--ink); }
+
+
+    /* Header Card */
+    .header-card {
+      grid-area: header;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .header-card h2 {
+      font-family: var(--font-heading); font-size: 2.5rem; margin: 0;
+      letter-spacing: 1px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      grid-area: stats;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    .stat-item {
+      background: rgba(0,0,0,.2); padding: 16px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .stat-item .label {
+      font-family: var(--font-heading); font-size: .9rem; color: var(--muted);
+      letter-spacing: .5px; text-transform: uppercase;
+    }
+    .stat-item .value {
+      font-family: var(--font-heading); font-size: 2.2rem; color: var(--primary);
+      line-height: 1.1;
+    }
+
+    /* Trophy Case */
+    .trophy-case { grid-area: trophies; }
+    .trophy-case h3, .activity-feed h3 {
+      font-family: var(--font-heading); font-size: 1.5rem; margin: 0 0 16px;
+    }
+    .trophy-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .trophy-item {
+      background: rgba(0,0,0,.2); padding: 12px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.1); font-size: .9rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .trophy-item .icon { font-size: 1.5rem; color: var(--accent); }
+    .trophy-item .title { font-weight: bold; }
+    .trophy-item .date { font-size: .8rem; color: var(--muted); }
+
+    /* Activity Feed */
+    .activity-feed { grid-area: activity; }
+    .activity-list { display: flex; flex-direction: column; gap: 12px; }
+    .activity-item {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 16px;
+      align-items: center; background: rgba(0,0,0,.2); padding: 12px 16px;
+      border-radius: 12px; border: 1px solid rgba(255,255,255,.1);
+    }
+    .activity-item .title { font-weight: bold; }
+    .activity-item .details { font-size: .9rem; color: var(--muted); }
+    .activity-item .tag {
+      font-family: var(--font-heading); font-size: .8rem; color: var(--primary);
+      background: rgba(0,255,157,.1); border: 1px solid rgba(0,255,157,.3);
+      padding: 2px 8px; border-radius: 99px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "profile"
+          "header"
+          "stats"
+          "activity"
+          "trophies";
+      }
+      .profile-card { flex-direction: row; gap: 24px; }
+    }
+    @media (max-width: 600px) {
+      .profile-card { flex-direction: column; }
+      .header-card { flex-direction: column; text-align: center; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- YouTube background -->
+  <div class="yt-wrap">
+    <iframe id="ytbg" src=""
+      title="Sports background" frameborder="0"
+      allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="athleteai.html" class="brand"><span class="dot"></span> Athletic Spirit</a>
+    <div>
+      <a href="athleteai.html">Home</a>
+      <a href="#activity">Activity</a>
+      <a href="#trophies">Achievements</a>
+    </div>
+    <button class="logout-btn" id="logout">Logout</button>
+  </nav>
+
+  <main>
+    <div class="dashboard-grid">
+
+      <!-- Profile Card -->
+      <div class="dash-card profile-card">
+        <button class="logout-btn edit-btn" id="editProfileBtn">Edit</button>
+        
+        <!-- View Mode -->
+        <div class="profile-view">
+          <img src="https://via.placeholder.com/120" alt="Athlete's profile picture" class="profile-pic" id="profilePic">
+          <div>
+            <h1 id="athleteName">Loading...</h1>
+            <p class="discipline" id="athleteDiscipline">Athlete</p>
+            <p class="profile-bio" id="athleteBio">Loading profile...</p>
+          </div>
+        </div>
+
+        <!-- Edit Mode (hidden by default) -->
+        <div class="profile-edit">
+          <div class="profile-pic-container" style="position: relative; margin-bottom: 16px;">
+            <img src="https://via.placeholder.com/120" alt="Athlete's profile picture" class="profile-pic" id="editProfilePic">
+            <div class="profile-pic-edit-overlay" onclick="document.getElementById('profilePicInput').click()">
+              <span>📷</span>
+            </div>
+            <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+          </div>
+          <div class="input-group">
+            <label for="editName">Name</label><input type="text" id="editName">
+          </div>
+          <div class="input-group">
+            <label for="editDiscipline">Discipline</label><input type="text" id="editDiscipline">
+          </div>
+          <div class="input-group">
+            <label for="editBio">Bio</label><textarea id="editBio"></textarea>
+          </div>
+          <div class="edit-actions">
+            <button class="save-btn" id="saveProfileBtn">Save</button>
+            <button class="cancel-btn" id="cancelEditBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header Card -->
+      <div class="dash-card header-card">
+        <h2>Athlete Dashboard</h2>
+        <div class="date-display" id="dateDisplay"></div>
+      </div>
+
+      <!-- Chart Card -->
+      <div class="dash-card chart-card">
+        <h3>Performance Trend (Weekly Volume)</h3>
+        <!-- Canvas for Chart.js -->
+        <canvas id="performanceChart"></canvas>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="dash-card stats-grid">
+        <div class="stat-item" id="stat-pb">
+          <div class="label">5K Personal Best</div>
+          <div class="value">--:--</div>
+        </div>
+        <div class="stat-item" id="stat-volume">
+          <div class="label">Weekly Volume</div>
+          <div class="value">0 KM</div>
+        </div>
+        <div class="stat-item" id="stat-sleep">
+          <div class="label">Avg. Sleep</div>
+          <div class="value">-h --m</div>
+        </div>
+        <div class="stat-item" id="stat-readiness">
+          <div class="label">Readiness</div>
+          <div class="value">--%</div>
+        </div>
+      </div>
+
+      <!-- Trophy Case -->
+      <div class="dash-card trophy-case" id="trophies">
+        <h3>🏆 Trophy Case</h3>
+        <div class="trophy-grid">
+          <!-- Trophies will be injected by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="dash-card activity-feed" id="activity">
+        <h3>Recent Activity</h3>
+        <div class="activity-list"><!-- Activity items will be injected by JavaScript --></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- YouTube IFrame Player API Script -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    const API_BASE_URL = 'http://localhost:3000';
+
+    // Logout functionality
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('authToken');
+      window.location.href = 'login.html';
+    });
+
+    // Display current date in header
+    document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // Load user dashboard data from backend
+    async function loadDashboardData() {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        // Fetch dashboard data
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/default`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Update dashboard with real data
+          console.log('Dashboard data:', data);
+          // You can add code here to update the UI with the fetched data
+        } else {
+          console.error('Failed to load dashboard data');
+        }
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      }
+    }
+
+    // Load dashboard data on page load
+    loadDashboardData();
+
+    // YouTube Background Player
+    const VIDEO_ID = (document.documentElement.getAttribute('data-video-id') || 'Bcpu-jqAL6w').trim();
+    let player;
+    function onYouTubeIframeAPIReady() {
+      if (VIDEO_ID) {
+        player = new YT.Player('ytbg', {
+          videoId: VIDEO_ID,
+          playerVars: { 'autoplay': 1, 'controls': 0, 'showinfo': 0, 'modestbranding': 1, 'loop': 1, 'playsinline': 1, 'rel': 0, 'playlist': VIDEO_ID },
+          events: { 'onReady': onPlayerReady }
+        });
+      }
+    }
+    function onPlayerReady(event) {
+      event.target.mute();
+      event.target.playVideo();
+    }
+  </script>
+</body>
+</html>

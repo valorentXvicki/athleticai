@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+transformers
+tenacity
+apscheduler
+google-generativeai
+scikit-learn
+python-dotenv
+requests
+pyjwt
+pandas
+beautifulsoup4
